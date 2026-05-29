@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Monthly Sales Target Prototype</title>
+  <style>
+    :root {
+      --bg: #f1f3f6;
+      --panel: #fff;
+      --line: #e8eaed;
+      --line-strong: #dcdfe5;
+      --text: #333;
+      --muted: #8c8c8c;
+      --blue: #176ff2;
+      --blue-soft: #eaf3ff;
+      --green: #25910f;
+      --red: #e6162d;
+      --row-hover: #f4f9ff;
+      --selected: #eef6ff;
+      --shadow: 0 8px 24px rgba(16, 24, 40, .12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+      font-size: 14px;
+      min-width: 1440px;
+    }
+
+    .page {
+      padding: 18px 4px 28px;
+    }
+
+    .filter-bar,
+    .table-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      overflow: visible;
+    }
+
+    .filter-bar {
+      min-height: 94px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 12px;
+    }
+
+    .filters {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    label {
+      font-weight: 600;
+      color: #585858;
+      line-height: 1;
+    }
+
+    select {
+      height: 38px;
+      min-width: 286px;
+      appearance: none;
+      border: 1px solid #dadde3;
+      border-radius: 4px;
+      background:
+        linear-gradient(45deg, transparent 50%, #4b4b4b 50%) calc(100% - 16px) 16px / 7px 7px no-repeat,
+        linear-gradient(135deg, #4b4b4b 50%, transparent 50%) calc(100% - 11px) 16px / 7px 7px no-repeat,
+        #fff;
+      color: #333;
+      font-size: 16px;
+      padding: 0 42px 0 18px;
+    }
+
+    .version-select { min-width: 330px; }
+
+    .search-actions,
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    button {
+      height: 38px;
+      border: 1px solid #dfe2e7;
+      border-radius: 5px;
+      background: #fff;
+      color: #333;
+      font-size: 16px;
+      padding: 0 18px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color .15s ease, background .15s ease, box-shadow .15s ease, color .15s ease;
+    }
+
+    button:hover:not(:disabled) {
+      border-color: #aeb8c6;
+      background: #fafcff;
+    }
+
+    .primary {
+      min-width: 88px;
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff;
+      box-shadow: 0 2px 4px rgba(23, 111, 242, .18);
+    }
+
+    .primary:hover { background: #0f61dd; }
+
+    .muted-btn:disabled {
+      color: #9d9d9d;
+      background: #fafafa;
+      border-color: #e6e6e6;
+      cursor: default;
+    }
+
+    .table-card {
+      margin-top: 16px;
+      border-radius: 5px 5px 0 0;
+      overflow: hidden;
+    }
+
+    .toolbar-wrap {
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+      position: relative;
+      z-index: 3;
+    }
+
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+    }
+
+    .split-wrapper {
+      position: relative;
+      display: inline-flex;
+    }
+
+    .split-main {
+      min-width: 196px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding-right: 14px;
+    }
+
+    .chevron {
+      width: 8px;
+      height: 8px;
+      border-right: 1.8px solid currentColor;
+      border-bottom: 1.8px solid currentColor;
+      transform: rotate(45deg);
+      margin-top: -3px;
+    }
+
+    .split-wrapper.open .chevron {
+      transform: rotate(225deg);
+      margin-top: 4px;
+    }
+
+    .menu {
+      position: absolute;
+      top: 44px;
+      right: 0;
+      width: 196px;
+      background: #fff;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      box-shadow: var(--shadow);
+      padding: 6px;
+      display: none;
+    }
+
+    .split-wrapper.open .menu { display: block; }
+
+    .menu button {
+      width: 100%;
+      height: 36px;
+      border: 0;
+      border-radius: 4px;
+      background: #fff;
+      text-align: left;
+      padding: 0 12px;
+      font-size: 15px;
+    }
+
+    .menu button:hover {
+      background: #f4f7fb;
+      color: var(--blue);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+    }
+
+    thead th {
+      height: 45px;
+      background: #fafafa;
+      border-bottom: 1px solid #ececec;
+      font-weight: 700;
+      color: #383838;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    thead th:first-child,
+    tbody th {
+      width: 316px;
+      text-align: left;
+      padding-left: 12px;
+      border-right: 1px solid var(--line);
+    }
+
+    .total-cell {
+      font-weight: 700;
+    }
+
+    tbody tr { height: 44px; }
+    tbody tr:hover { background: var(--row-hover); }
+    tbody tr.selected { background: var(--selected); }
+    tbody tr.section-top { border-top: 5px solid #f4f4f4; }
+
+    tbody th {
+      font-size: 16px;
+      font-weight: 700;
+      color: #3c3c3c;
+    }
+
+    tbody td {
+      text-align: center;
+      font-size: 17px;
+      color: #3b3b3b;
+      white-space: nowrap;
+    }
+
+    .total-cell { font-size: 18px; }
+    .positive { color: var(--green); }
+    .negative { color: var(--red); }
+    .dash { color: #333; }
+
+    .row-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .expand {
+      width: 21px;
+      height: 21px;
+      border: 1px solid #dfe3e8;
+      border-radius: 2px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #333;
+      font-size: 19px;
+      line-height: 19px;
+      font-weight: 400;
+      background: #fff;
+    }
+
+    .info {
+      width: 16px;
+      height: 16px;
+      border: 1px solid #cdd1d6;
+      border-radius: 50%;
+      color: #adb3ba;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-family: Georgia, serif;
+      font-style: italic;
+      font-weight: 700;
+    }
+
+    .toast {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: #fff;
+      color: #2f3a45;
+      border: 1px solid #cfe4d1;
+      box-shadow: var(--shadow);
+      border-radius: 6px;
+      padding: 12px 18px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s ease, transform .22s ease;
+      z-index: 20;
+      font-size: 15px;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(21, 26, 33, .32);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 15;
+    }
+
+    .modal-mask.show { display: flex; }
+
+    .modal {
+      width: 460px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, .22);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--line);
+      font-weight: 700;
+      font-size: 17px;
+    }
+
+    .close {
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border: 0;
+      font-size: 22px;
+      color: #888;
+      background: transparent;
+    }
+
+    .modal-body {
+      padding: 22px 20px 8px;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    .modal-field {
+      display: none;
+      flex-direction: column;
+      gap: 7px;
+      margin-bottom: 16px;
+    }
+
+    .modal-field.show {
+      display: flex;
+    }
+
+    .modal-field select {
+      min-width: 160px;
+      width: 160px;
+      font-size: 15px;
+    }
+
+    .upload-box {
+      margin-top: 14px;
+      height: 104px;
+      border: 1px dashed #bfc8d5;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6c7785;
+      background: #fbfdff;
+    }
+
+    .modal-footer {
+      height: 64px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+      padding: 0 20px;
+      border-top: 1px solid var(--line);
+    }
+  </style>
+</head>
+<body>
+  <div class="toast" id="toast">Copied current list data to May-2026.</div>
+
+  <main class="page">
+    <section class="filter-bar">
+      <div class="filters">
+        <div class="field">
+          <label for="country">Country</label>
+          <select id="country">
+            <option>Norway</option>
+            <option>Denmark</option>
+            <option>Sweden</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="series">Series</label>
+          <select id="series">
+            <option>All</option>
+            <option>G6</option>
+            <option>G9</option>
+            <option>P7</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="monthVersion">Month Version</label>
+          <select class="version-select" id="monthVersion">
+            <option value="Apr-2026 (Current)">Apr-2026 (Current)</option>
+          </select>
+        </div>
+      </div>
+      <div class="search-actions">
+        <button id="resetBtn">Reset</button>
+        <button class="primary" id="searchBtn">Search</button>
+      </div>
+    </section>
+
+    <section class="table-card">
+      <div class="toolbar-wrap">
+        <div class="toolbar-left">
+          <button id="expandAllBtn" aria-expanded="false">Expand all</button>
+        </div>
+        <div class="toolbar">
+          <button>Log</button>
+          <button>Export</button>
+          <button id="importTargetBtn">Import Monthly Sales Target</button>
+          <div class="split-wrapper" id="splitWrapper">
+            <button class="split-main" id="addVersionBtn" aria-haspopup="true" aria-expanded="false">
+              Add New Month Version <span class="chevron" aria-hidden="true"></span>
+            </button>
+            <div class="menu" id="addVersionMenu" role="menu">
+              <button id="copyLastMonthBtn" role="menuitem">Copy Last Month</button>
+              <button id="importNewMonthBtn" role="menuitem">Import New Month</button>
+            </div>
+          </div>
+          <button class="muted-btn" id="modifyBtn" disabled>Modify N-1 Month data</button>
+          <button class="muted-btn" id="editBtn" disabled>Edit</button>
+        </div>
+      </div>
+
+      <table aria-label="Monthly sales target table">
+        <thead>
+          <tr id="tableHead"></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <div class="modal-mask" id="modalMask">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <span id="modalTitle">Import New Month</span>
+        <button class="close" id="closeModal" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="modalText">Upload a monthly version file. The prototype keeps this as a visual interaction only.</div>
+        <div class="modal-field" id="importYearField">
+          <label for="importYear">Import Year</label>
+          <select id="importYear">
+            <option value="2026">2026</option>
+            <option value="2027">2027</option>
+          </select>
+        </div>
+        <div class="upload-box">Click or drag file to this area</div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancelModal">Cancel</button>
+        <button class="primary" id="confirmModal">Import</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const months = [
+      "Jan-2026", "Feb-2026", "Mar-2026", "Apr-2026", "May-2026", "Jun-2026",
+      "Jul-2026", "Aug-2026", "Sep-2026", "Oct-2026", "Nov-2026", "Dec-2026",
+      "Jan-2027", "Feb-2027", "Mar-2027"
+    ];
+
+    const rows = [
+      { label: "Sales Target", info: true, values: [200, 230, 260, 290, 300, 320, 340, 360, 380, 400, "-", "-", "-", "-", "-"], total: "4500" },
+      { label: "Xpeng Delivery Deviation", info: true, values: ["+113", "+36", "-7", "+255", "+367", "+225", "-1", "-45", "-83", "+123", "-", "-", "-", "-", "-"], total: "+983" },
+      { label: "China Production", expand: true, info: true, sectionTop: true, values: [590, 710, 700, 710, 750, 760, 363, 310, 585, 705, "", "", "", "", ""], total: "6183" },
+      { label: "KD Factory Production", expand: true, info: true, selected: true, values: [1062, 1202, 869, 710, 750, 760, 363, 310, 575, 695, 725, 725, 785, 775, 380], total: "10686" },
+      { label: "ETD", expand: true, info: true, values: [590, 625, 700, 710, 750, 760, 363, 310, 585, 705, 735, 735, 795, 785, 385], total: "9533" },
+      { label: "ETA", expand: true, info: true, values: [266, 425, 620, 625, 760, 750, 620, 273, 345, 585, 685, 775, 705, 685, 635], total: "8754" },
+      { label: "Actual ETA", expand: true, info: true, values: [1271, 907, 660, "", 831, 1147, 1149, 973, 920, 902, 1193, 868, 816, 796, ""], total: "12433" },
+      { label: "Actual Arrival", expand: true, info: true, values: [155, 292, 563, "", "", "", "", "", "", "", "", "", "", "", ""], total: "1010" },
+      { label: "Deviation", expand: true, info: true, values: [111, 133, 57, "", "", "", "", "", "", "", "", "", "", "", ""], total: "301" },
+      { label: "Xpeng Delivery", expand: true, info: true, sectionTop: true, values: [313, 266, 253, 545, 667, 545, 339, 315, 297, 523, 647, 528, "", "", ""], total: "5238" },
+      { label: "National Stock", expand: true, info: true, values: [643, 601, 732, 879, 741, 971, 1330, 1250, 1178, 886, 762, 930, "", "", ""], total: "10903" },
+      { label: "Day Supply (National)", expand: true, info: true, values: [195, 143, 126, 126, 120, 157, 215, 202, 190, 136, 120, 144, "", "", ""], total: "1874" },
+      { label: "Customer Delivery", expand: true, info: true, sectionTop: true, values: [313, 266, 253, 545, 667, 545, 339, 315, 297, 523, 647, 528, "", "", ""], total: "5238" },
+      { label: "Dealer Stock", expand: true, info: true, values: [313, 414, 829, 924, 1034, 1274, 1632, 1558, 1480, 1120, 964, 1166, "", "", ""], total: "12708" },
+      { label: "Day Supply (Dealer)", expand: true, info: true, values: [126, 108, 221, 208, 187, 214, 262, 245, 232, 157, 132, 180, "", "", ""], total: "2272" }
+    ];
+
+    const tableHead = document.getElementById("tableHead");
+    const tableBody = document.getElementById("tableBody");
+    const monthVersion = document.getElementById("monthVersion");
+    const series = document.getElementById("series");
+    const modifyBtn = document.getElementById("modifyBtn");
+    const editBtn = document.getElementById("editBtn");
+    const expandAllBtn = document.getElementById("expandAllBtn");
+    const splitWrapper = document.getElementById("splitWrapper");
+    const addVersionBtn = document.getElementById("addVersionBtn");
+    const modalMask = document.getElementById("modalMask");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalText = document.getElementById("modalText");
+    const importYearField = document.getElementById("importYearField");
+    const importYear = document.getElementById("importYear");
+    const toast = document.getElementById("toast");
+    let modalMode = "newMonth";
+    let isExpanded = false;
+
+    function renderTable() {
+      const headers = ["Field", ...months.slice(0, 12), "TTL-2026", ...months.slice(12)];
+      tableHead.innerHTML = headers.map(header => `<th>${header}</th>`).join("");
+      tableBody.innerHTML = rows.map(row => {
+        const classes = [row.selected ? "selected" : "", row.sectionTop ? "section-top" : ""].filter(Boolean).join(" ");
+        const label = `
+          <span class="row-label">
+            ${row.expand ? `<span class="expand">${isExpanded ? '-' : '+'}</span>` : ''}
+            <span>${row.label}</span>
+            ${row.info ? '<span class="info">i</span>' : ''}
+          </span>`;
+
+        const monthCells = row.values.map(value => {
+          const text = value === "" ? "" : value;
+          const className = typeof value === "string" && value.startsWith("+")
+            ? "positive"
+            : typeof value === "string" && value.startsWith("-") && value !== "-"
+              ? "negative"
+              : value === "-"
+                ? "dash"
+                : "";
+          return `<td class="${className}">${text}</td>`;
+        });
+
+        const totalClass = String(row.total).startsWith("+") ? "positive total-cell" : "total-cell";
+        monthCells.splice(12, 0, `<td class="${totalClass}">${row.total}</td>`);
+        return `<tr class="${classes}"><th>${label}</th>${monthCells.join("")}</tr>`;
+      }).join("");
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2600);
+    }
+
+    function sumNumeric(values) {
+      return values.reduce((sum, value) => sum + (typeof value === "number" ? value : 0), 0);
+    }
+
+    function formatDeviation(value) {
+      if (value > 0) return `+${value}`;
+      if (value < 0) return String(value);
+      return "0";
+    }
+
+    function recalculateDeliveryDeviation(year) {
+      const salesTargetRow = rows.find(row => row.label === "Sales Target");
+      const deviationRow = rows.find(row => row.label === "Xpeng Delivery Deviation");
+      const deliveryRow = rows.find(row => row.label === "Xpeng Delivery");
+
+      months.forEach((month, index) => {
+        if (!month.endsWith(year)) return;
+        const target = salesTargetRow.values[index];
+        const delivery = deliveryRow.values[index];
+        deviationRow.values[index] = typeof target === "number" && typeof delivery === "number"
+          ? formatDeviation(delivery - target)
+          : "-";
+      });
+
+      salesTargetRow.total = String(sumNumeric(salesTargetRow.values));
+      const deviationTotal = deviationRow.values.reduce((sum, value) => {
+        if (typeof value !== "string" || value === "-") return sum;
+        return sum + Number(value.replace("+", ""));
+      }, 0);
+      deviationRow.total = formatDeviation(deviationTotal);
+    }
+
+    function importSalesTarget(year) {
+      const salesTargetRow = rows.find(row => row.label === "Sales Target");
+      const importedTargets = {
+        "2026": [210, 240, 270, 300, 310, 330, 350, 370, 390, 410, 430, 450],
+        "2027": [460, 470, 480]
+      };
+      let importedIndex = 0;
+
+      months.forEach((month, index) => {
+        if (!month.endsWith(year)) return;
+        salesTargetRow.values[index] = importedTargets[year][importedIndex] ?? salesTargetRow.values[index];
+        importedIndex += 1;
+      });
+
+      recalculateDeliveryDeviation(year);
+      renderTable();
+    }
+
+    function openModal(title, text, mode = "newMonth") {
+      modalMode = mode;
+      modalTitle.textContent = title;
+      modalText.textContent = text;
+      modalText.style.display = text ? "block" : "none";
+      document.getElementById("cancelModal").textContent =
+        mode === "salesTarget" ? "Download Template" : "Cancel";
+      document.getElementById("confirmModal").textContent =
+        mode === "salesTarget" ? "Upload" : "Import";
+      importYearField.classList.toggle("show", mode === "salesTarget");
+      modalMask.classList.add("show");
+    }
+
+    function closeModal() {
+      modalMask.classList.remove("show");
+    }
+
+    function updateActionState() {
+      const enabled = series.value !== "All";
+      modifyBtn.style.display = enabled ? "" : "none";
+      editBtn.style.display = enabled ? "" : "none";
+      modifyBtn.disabled = false;
+      editBtn.disabled = false;
+      editBtn.classList.toggle("primary", enabled);
+    }
+
+    function copyLastMonth() {
+      splitWrapper.classList.remove("open");
+      addVersionBtn.setAttribute("aria-expanded", "false");
+
+      const nextVersion = "May-2026";
+      const existing = Array.from(monthVersion.options).some(option => option.value === nextVersion);
+      if (!existing) {
+        const option = document.createElement("option");
+        option.value = nextVersion;
+        option.textContent = nextVersion;
+        monthVersion.appendChild(option);
+      }
+      monthVersion.value = nextVersion;
+
+      rows[0].values[4] = rows[0].values[3];
+      rows[1].values[4] = rows[1].values[3];
+      renderTable();
+      showToast("Month Version added: May-2026. Last month version data has been copied");
+    }
+
+    addVersionBtn.addEventListener("click", event => {
+      event.stopPropagation();
+      const open = !splitWrapper.classList.contains("open");
+      splitWrapper.classList.toggle("open", open);
+      addVersionBtn.setAttribute("aria-expanded", String(open));
+    });
+
+    document.getElementById("copyLastMonthBtn").addEventListener("click", copyLastMonth);
+
+    expandAllBtn.addEventListener("click", () => {
+      isExpanded = !isExpanded;
+      expandAllBtn.textContent = isExpanded ? "Collapse all" : "Expand all";
+      expandAllBtn.setAttribute("aria-expanded", String(isExpanded));
+      renderTable();
+    });
+
+    document.getElementById("importNewMonthBtn").addEventListener("click", () => {
+      splitWrapper.classList.remove("open");
+      openModal("Import New Month", "Upload a file to create a new month version.", "newMonth");
+    });
+
+    document.getElementById("importTargetBtn").addEventListener("click", () => {
+      openModal("Import Monthly Sales Target", "", "salesTarget");
+    });
+
+    document.getElementById("searchBtn").addEventListener("click", () => {
+      showToast(`Search completed for ${monthVersion.value}.`);
+    });
+
+    series.addEventListener("change", updateActionState);
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      document.getElementById("country").value = "Norway";
+      series.value = "All";
+      monthVersion.value = monthVersion.options[0].value;
+      updateActionState();
+      showToast("Filters reset.");
+    });
+
+    document.getElementById("closeModal").addEventListener("click", closeModal);
+    document.getElementById("cancelModal").addEventListener("click", () => {
+      if (modalMode === "salesTarget") {
+        showToast("Monthly Sales Target template downloaded.");
+        return;
+      }
+      closeModal();
+    });
+    document.getElementById("confirmModal").addEventListener("click", () => {
+      if (modalMode === "salesTarget") {
+        importSalesTarget(importYear.value);
+      }
+      closeModal();
+      showToast(modalMode === "salesTarget"
+        ? `Sales Target ${importYear.value} imported. Xpeng Delivery Deviation recalculated.`
+        : `${modalTitle.textContent} submitted.`);
+    });
+
+    modalMask.addEventListener("click", event => {
+      if (event.target === modalMask) closeModal();
+    });
+
+    document.addEventListener("click", event => {
+      if (!splitWrapper.contains(event.target)) {
+        splitWrapper.classList.remove("open");
+        addVersionBtn.setAttribute("aria-expanded", "false");
+      }
+    });
+
+    renderTable();
+    updateActionState();
+  </script>
+</body>
+</html>
